@@ -29,7 +29,7 @@ function! previm#open(preview_html_file) abort
       let path = substitute(path,'\/','','')
     endif
     let path = substitute(path,' ','%20','g')
-    call s:apply_openbrowser('file:///' . path)
+    call s:apply_openbrowser(path)
   else
     call s:echo_err('Command for the open can not be found. show detail :h previm#open')
   endif
@@ -59,8 +59,8 @@ function! previm#refresh() abort
   call previm#refresh_js()
 endfunction
 
-let s:default_origin_css_path = "@import url('../../_/css/origin.css');"
-let s:default_github_css_path = "@import url('../../_/css/lib/github.css');"
+let s:default_origin_css_path = "@import url('_/css/origin.css');"
+let s:default_github_css_path = "@import url('_/css/lib/github.css');"
 
 function! previm#refresh_css() abort
   let css = []
@@ -91,7 +91,8 @@ endfunction
 let s:base_dir = fnamemodify(expand('<sfile>:p:h') . '/../preview', ':p')
 
 function! s:preview_directory()
-  return s:base_dir . sha256(expand('%:p'))[:15] . '-' . getpid()
+  return '/tmp/' . sha256(expand('%:p'))[:15] . '-' . getpid()
+  " return s:base_dir . sha256(expand('%:p'))[:15] . '-' . getpid()
 endfunction
 
 function! previm#make_preview_file_path(path) abort
@@ -108,7 +109,16 @@ function! previm#make_preview_file_path(path) abort
       call s:File.copy(src, dst)
     endif
   endif
+  call s:dirty()
   return dst
+endfunction
+
+function! s:dirty()
+  let l:dir=s:preview_directory() . '/.copied_files_successfull/'
+	if !isdirectory(l:dir)
+    call mkdir(l:dir)
+    call system('cp -rv ' . s:base_dir . '/_/css/ ' . s:base_dir . '/_/js/ ' . s:preview_directory())
+  endif
 endfunction
 
 function! previm#cleanup_preview(dir)
